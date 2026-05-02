@@ -5,37 +5,40 @@ import pro1.DataSource;
 import pro1.apiDataModel.ActionsList;
 import pro1.reports.report2.reportDataModel.DepartmentStats;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class DepartmentStatsReporting {
+
     public static DepartmentStats GetReport(DataSource dataSource, String rok, String katedra) {
-        var actionsListJson = dataSource.getRozvrhByKatedra(rok, katedra);
-        var actionsList = new Gson().fromJson(actionsListJson, ActionsList.class);
-        return new DepartmentStats(
-                maxActionStudentsCount(actionsList),
-                emptyActionsCount(actionsList),
-                maxTeacherScore(actionsList)
-        );
-        // TODO 2.5: Oprav testovací data
-    }
+        var json = dataSource.getRozvrhByKatedra(rok, katedra);
+        var actionsList = new Gson().fromJson(json, ActionsList.class);
 
-    private static long maxActionStudentsCount(ActionsList actionsList) {
-        // TODO 2.0: Doplň potřebné atributy do třídy apiDataModel.Action
-        // TODO 2.1: Doplň: maximální počet přihlášených studentů na rozvrhové akci
-        return 50;
-    }
+        long maxStudents = 0;
+        long emptyCount = 0;
+        Map<Long, Long> teacherScores = new HashMap<>();
 
-    private static long emptyActionsCount(ActionsList actionsList) {
-        // TODO 2.2: Doplň: počet rozvrhových akcí s 0 studenty
-        return 60;
-    }
+        if (actionsList != null && actionsList.items != null) {
+            for (var action : actionsList.items) {
+                if (action.katedra == null || !katedra.equalsIgnoreCase(action.katedra)) {
+                    continue;
+                }
+                if (action.obsazeni == 0) {
+                    emptyCount++;
+                }
+                if (action.obsazeni > maxStudents) {
+                    maxStudents = action.obsazeni;
+                }
+                if (action.ucitIdno != null) {
+                    teacherScores.put(action.ucitIdno, 
+                        teacherScores.getOrDefault(action.ucitIdno, 0L) + action.obsazeni);
+                }
+            }
+        }
 
+        long maxScore = teacherScores.isEmpty() ? 0 : Collections.max(teacherScores.values());
 
-    private static long maxTeacherScore(ActionsList actionsList) {
-        // TODO 2.4: Doplň: nejvyšší výsledek dosažený metodou teacherScore mezi všemi učiteli ve vstupních datech
-        return 70;
-    }
-
-    private static long teacherScore(long teacherId, ActionsList actionsList) {
-        // TODO 2.3: Doplň pomocnou metodu - součet všech přihlášených studentů na akcích daného učitele
-        return 0;
+        return new DepartmentStats(maxStudents, emptyCount, maxScore);
     }
 }

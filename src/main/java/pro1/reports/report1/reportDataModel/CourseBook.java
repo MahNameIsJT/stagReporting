@@ -1,14 +1,13 @@
 package pro1.reports.report1.reportDataModel;
 
-public class CourseBook
-{
+public class CourseBook {
+    public String courseCode;
     public String title;
     public String author;
-    public String courseCode;
 
-    public CourseBook(String title, String author, String courseCode) {
+    public CourseBook(String courseCode, String title, String author) {
+        this.courseCode = courseCode;
         this.title = title;
         this.author = author;
-        this.courseCode = courseCode;
     }
 }
